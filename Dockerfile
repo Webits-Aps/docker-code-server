@@ -1,14 +1,23 @@
+# CHANGE TO FOCAL
 FROM ghcr.io/linuxserver/baseimage-ubuntu:bionic
 
 # set version label
-ARG BUILD_DATE
-ARG VERSION
-ARG CODE_RELEASE
-LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
-LABEL maintainer="aptalca"
+LABEL maintainer="Jakob Busk <jakob@webits.dk>"
+LABEL name="code-server on Docker"
+LABEL version="latest"
 
 # environment settings
-ENV HOME="/config"
+ENV HOME="/home"
+
+RUN apt-get update
+RUN apt install -y zsh wget curl sudo
+RUN touch /home/.zshrc
+
+RUN chown -R abc:abc /home
+USER abc
+RUN /bin/zsh /home/.zshrc
+
+USER root
 
 RUN \
   echo "**** install node repo ****" && \
@@ -63,5 +72,74 @@ RUN \
 # add local files
 COPY /root /
 
+RUN sudo apt update
+RUN sudo apt -y install software-properties-common
+RUN add-apt-repository -y ppa:ondrej/php
+RUN sudo apt update
+RUN sudo apt -y install composer \
+    php8.0 \
+    php8.0-dev \
+    php8.0-bcmath \
+    php8.0-ctype \
+    php8.0-curl \
+    php8.0-gd \
+    php8.0-intl \
+    php8.0-mbstring \
+    php8.0-mysql \
+    php8.0-pgsql \
+    php8.0-sqlite3 \
+    php8.0-tokenizer \
+    php8.0-xml \
+    php8.0-zip 
+
+RUN echo "**** install php7.4 ****"
+RUN apt update && \
+    apt install -y \
+    php7.4 \
+    php7.4-xml \
+    php7.4-mongodb \
+    php7.4-mysql \
+    php7.4-imagick \
+    php7.4-imap \
+    php7.4-fpm \
+    php7.4-cli \
+    php7.4-bcmath \
+    php7.4-mbstring 
+    
+RUN echo "**** install php8.1 ****"
+RUN apt update && \
+    apt install -y \
+    php8.1 \
+    php8.1-xml \
+    php8.1-mongodb \
+    php8.1-mysql \
+    php8.1-imagick \
+    php8.1-imap \
+    php8.1-fpm \
+    php8.1-cli \
+    php8.1-bcmath \
+    php8.1-mbstring 
+
+RUN sudo apt update
+RUN sudo apt install -y git zip unzip build-essential libssl-dev libffi-dev python3-dev python3.8 lsof -y
+RUN sudo apt-get install -y apt-transport-https ca-certificates gnupg
+
+# Install google cli tools
+RUN sudo npm install -g firebase-tools
+RUN sudo apt-get install -y apt-transport-https ca-certificates gnupg
+RUN echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+RUN curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
+RUN sudo apt-get update && sudo apt-get install -y \
+    google-cloud-sdk \
+    google-cloud-sdk-datastore-emulator \
+    google-cloud-sdk-cloud-build-local \
+    google-cloud-sdk-pubsub-emulator
+
+# RUN sudo apt update
+# RUN sudo apt install -y docker docker-compose
+
 # ports and volumes
-EXPOSE 8443
+EXPOSE 2999-9000
+RUN sudo usermod --shell /bin/zsh abc
+
+COPY ./.zshrc /home

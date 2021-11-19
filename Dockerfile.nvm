@@ -1,0 +1,53 @@
+FROM ubuntu:focal
+
+# set version label
+LABEL maintainer="Jakob Busk <jakob@webits.dk>"
+LABEL name="code-server on Docker"
+LABEL version="latest"
+
+# environment settings
+ENV HOME="/home"
+ENV WORKSPACE="/workspace"
+
+# Install development dependencies 
+# Install NVM and node  13, 14, 15, 16
+RUN echo "**** install nvm ****" && \
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+# We use latest major version of Node.js distributed VS Code. (see about dialog in your local VS Code)
+RUN bash -c "nvm install 13 \
+    && nvm install 14 \
+    && nvm install 15 \
+    && nvm install 16 \
+    && nvm use 16 \
+    && nvm alias default 16"
+
+
+# RUN echo "**** install code-server ****" && \
+#   if [ -z ${CODE_RELEASE+x} ]; then \
+#     CODE_RELEASE=$(curl -sX GET https://registry.yarnpkg.com/code-server \
+#     | jq -r '."dist-tags".latest' | sed 's|^|v|'); \
+#   fi && \
+#   CODE_VERSION=$(echo "$CODE_RELEASE" | awk '{print substr($1,2); }') && \
+#   yarn config set network-timeout 600000 -g && \
+#   yarn --production --verbose --frozen-lockfile global add code-server@"$CODE_VERSION" && \
+#   yarn cache clean && \
+#   echo "**** clean up ****" && \
+#   apt-get purge --auto-remove -y \
+#     build-essential \
+#     libx11-dev \
+#     libxkbfile-dev \
+#     libsecret-1-dev \
+#     pkg-config && \
+#   apt-get clean && \
+#   rm -rf \
+#     /tmp/* \
+#     /var/lib/apt/lists/* \
+#     /var/tmp/*
+
+# add local files
+COPY /root /
+
+# ports and volumes
+EXPOSE 2999
+EXPOSE 3000-9999

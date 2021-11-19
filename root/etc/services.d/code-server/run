@@ -1,7 +1,7 @@
 #!/usr/bin/with-contenv bash
 
 if [ -n "${PASSWORD}" ] || [ -n "${HASHED_PASSWORD}" ]; then
-    AUTH="password"
+    AUTH="${PASSWORD}"
 else
     AUTH="none"
     echo "starting with no password"
@@ -13,13 +13,17 @@ else
     PROXY_DOMAIN_ARG="--proxy-domain=${PROXY_DOMAIN}"
 fi
 
-exec \
-    s6-setuidgid abc \
-        /usr/local/bin/code-server \
-            --bind-addr 0.0.0.0:8443 \
-            --user-data-dir /config/data \
-            --extensions-dir /config/extensions \
-            --disable-telemetry \
-            --auth "${AUTH}" \
-            "${PROXY_DOMAIN_ARG}" \
-            /config/workspace
+if [ -z ${CODE_PORT} ]; then
+    CODE_PORT_ARG="--bind-addr=0.0.0.0:2999"
+else
+    CODE_PORT_ARG="--bind-addr 0.0.0.0:${CODE_PORT}"
+fi
+
+/usr/local/bin/code-server \
+    "${CODE_PORT_ARG}" \
+    --user-data-dir /home/.config/data \
+    --extensions-dir /home/.config/extensions \
+    --disable-telemetry \
+    --auth "${AUTH}" \
+    "${PROXY_DOMAIN_ARG}" \
+    /home/workspace

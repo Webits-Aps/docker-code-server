@@ -1,6 +1,15 @@
 #!/usr/bin/with-contenv bash
 
-mkdir -p /config/{extensions,data,workspace,.ssh}
+mkdir /home/workspace
+mkdir /home/.ssh
+mkdir /home/.config/extensions
+mkdir /home/.config/data
+
+# if [ -z ${USER} ]; then
+#     CODE_USER="--bind-addr=0.0.0.0:2999"
+# else
+#     CODE_USER="--bind-addr 0.0.0.0:${CODE_PORT}"
+# fi
 
 if [ -n "${SUDO_PASSWORD}" ] || [ -n "${SUDO_PASSWORD_HASH}" ]; then
     echo "setting up sudo access"
@@ -23,15 +32,95 @@ if [ -f "/usr/bin/find" ] && [ -f "/usr/bin/xargs" ]; then
 
     # Split workload between config and workspace
     echo "setting permissions::configuration"
-    find /config -path /config/workspace -prune -false -o -type d -print0 | \
+    find /home -path /home/.config -prune -false -o -type d -print0 | \
         xargs --null -r --max-args=1 --max-procs=$((CORES*2*8)) \
         chown -R abc:abc
 
     echo "setting permissions::workspace"
-    chown abc:abc /config/workspace
+    chown abc:abc /home/workspace
 else
     # Set permissions on data mount
     # do not decend into the workspace
-    chown -R abc:abc "$(ls /config -I workspace)"
-    chown abc:abc /config/workspace
+    chown -R abc:abc "$(ls /home -I workspace)"
+    chown abc:abc /home
 fi
+
+
+sudo sh -c "$(wget -O- https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+sudo zsh
+git clone https://github.com/wg/wrk.git /home/.cli/wrk
+cd /home/.cli/wrk
+sudo make
+cd /home
+git clone https://github.com/nvm-sh/nvm.git .nvm
+cd ~/.nvm && git checkout v0.39.0
+. ./nvm.sh
+
+cat << 'EOF'  > /home/.zshrc
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# Laravel
+export PATH=~/.composer/vendor/bin:$PATH
+
+#Kill port 
+function killport() {
+    if [ "$1" != "" ]
+    then
+        kill -9 $(lsof -t -i:$1)
+    else
+        echo Choose a port
+    fi # closing statement of if-else block
+}
+
+# # wrk http tester
+alias wrk="$HOME/.cli/wrk/wrk"
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f "$HOME/.dotfiles/google-cloud-sdk/path.zsh.inc" ]; then . "$HOME/.dotfiles/google-cloud-sdk/path.zsh.inc"; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f "$HOME/.dotfiles/google-cloud-sdk/completion.zsh.inc" ]; then . "$HOME/.dotfiles/google-cloud-sdk/completion.zsh.inc"; fi
+
+
+# If you come from bash you might have to change your $PATH.
+# export PATH=$HOME/bin:/usr/local/bin:$PATH
+
+# Path to your oh-my-zsh installation.
+export ZSH="$HOME/.oh-my-zsh"
+
+# Set name of the theme to load --- if set to "random", it will
+# load a random theme each time oh-my-zsh is loaded, in which case,
+# to know which specific one was loaded, run: echo $RANDOM_THEME
+# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
+ZSH_THEME="robbyrussell"
+plugins=(git github gitignore)
+
+EOF
+/bin/zsh | nvm install 12
+/bin/zsh | nvm install 13
+/bin/zsh | nvm install 14
+/bin/zsh | nvm install 15
+/bin/zsh | nvm install 16
+/bin/zsh | nvm install 17
+
+# # Install NPM globals 
+npm install --global @gridsome/cli
+npm install -g firebase-tools
+npm i -g nodemon
+npm install -g yarn
+npm install -g npx
+
+# # linting
+npm install -g eslint
+npm install -g babel-eslint
+npm install -g eslint-config-standard
+npm install -g eslint-plugin-react
+npm install -g eslint-config-prettier
+npm install -g eslint-plugin-prettier
+npm install -g prettier
+npm install -g standard
+npm install -g typescript
+
+sudo usermod --shell /bin/zsh abc
